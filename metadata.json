@@ -1,0 +1,7 @@
+{
+  "name": "Viblogger for Blogger",
+  "description": "Enterprise autonomous content synthesis and operations workstation for Blogger with Mermaid diagrams, KaTeX math, GIS OAuth, and Search Console telemetry.",
+  "requestFramePermissions": [],
+  "majorCapabilities": ["MAJOR_CAPABILITY_SERVER_SIDE_GEMINI_API"]
+}
+
