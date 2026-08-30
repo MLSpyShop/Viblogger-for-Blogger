@@ -98,7 +98,8 @@ export default function App() {
     hasInitializedRef.current = true;
 
     try {
-      const savedKey = localStorage.getItem('viblogger_gemini_key') || '';
+      const envKey = (import.meta as unknown as { env?: { VITE_GEMINI_API_KEY?: string } }).env?.VITE_GEMINI_API_KEY || '';
+      const savedKey = localStorage.getItem('viblogger_gemini_key') || envKey;
       const savedClientId = localStorage.getItem('viblogger_client_id') || '';
       const savedBlogId = localStorage.getItem('viblogger_blog_id') || '';
 
