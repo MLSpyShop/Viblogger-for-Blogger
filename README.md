@@ -1,3 +1,5 @@
+[![License: MIT](https://img.shields.io/badge/License-MIT-yellow.svg)](https://github.com/MLSpyShop/Viblogger-for-Blogger/blob/main/LICENSE)
+
 # Viblogger
 
 Viblogger is an agentic command-line interface (CLI) designed to automate common Blogger (Blogspot) workflows. It acts as an agent to perform tasks such as creating, scheduling, and publishing posts, managing templates and widgets, and running repeatable content workflows.
@@ -104,7 +106,7 @@ Contributions welcome. Please:
 
 ## License
 
-Specify the license (e.g., MIT). Update LICENSE file accordingly.
+This project is licensed under the MIT License — see [LICENSE](https://github.com/MLSpyShop/Viblogger-for-Blogger/blob/main/LICENSE) for details.
 
 ## Maintainers / Contact
 
