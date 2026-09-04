@@ -16,8 +16,8 @@ export const GeminiService = {
       throw new Error('Gemini API key is required. Please input it in the toolbar.');
     }
 
-    const streamEndpoint = `https://generativelanguage.googleapis.com/v1beta/models/gemini-2.5-flash:streamGenerateContent?key=${encodeURIComponent(cleanKey)}&alt=sse`;
-    const staticEndpoint = `https://generativelanguage.googleapis.com/v1beta/models/gemini-2.5-flash:generateContent?key=${encodeURIComponent(cleanKey)}`;
+    const streamEndpoint = `https://generativelanguage.googleapis.com/v1beta/models/gemini-3.8-flash:streamGenerateContent?key=${encodeURIComponent(cleanKey)}&alt=sse`;
+    const staticEndpoint = `https://generativelanguage.googleapis.com/v1beta/models/gemini-3.8-flash:generateContent?key=${encodeURIComponent(cleanKey)}`;
 
     const schema = {
       type: 'OBJECT',
