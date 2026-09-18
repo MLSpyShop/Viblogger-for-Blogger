@@ -9,6 +9,7 @@ import { Modals } from './components/Modals';
 import { soundEngine } from './services/sound';
 import { BloggerAPI } from './services/bloggerApi';
 import { GeminiService } from './services/geminiService';
+import { OpenRouterService } from './services/openRouterService';
 import { RenderingEngine } from './services/renderingEngine';
 import { BlogItem, MessageLine, StagedAction, GeminiPlanPayload } from './types';
 
@@ -36,6 +37,7 @@ declare global {
 
 export default function App() {
   const [geminiKey, setGeminiKey] = useState('');
+  const [openRouterKey, setOpenRouterKey] = useState('');
   const [clientId, setClientId] = useState('');
   const [blogId, setBlogId] = useState('');
   const [userBlogs, setUserBlogs] = useState<BlogItem[]>([]);
@@ -99,11 +101,14 @@ export default function App() {
 
     try {
       const envKey = (import.meta as unknown as { env?: { VITE_GEMINI_API_KEY?: string } }).env?.VITE_GEMINI_API_KEY || '';
+      const envOrKey = (import.meta as unknown as { env?: { VITE_OPENROUTER_API_KEY?: string } }).env?.VITE_OPENROUTER_API_KEY || '';
       const savedKey = localStorage.getItem('viblogger_gemini_key') || envKey;
+      const savedOrKey = localStorage.getItem('viblogger_openrouter_key') || envOrKey;
       const savedClientId = localStorage.getItem('viblogger_client_id') || '';
       const savedBlogId = localStorage.getItem('viblogger_blog_id') || '';
 
       if (savedKey) setGeminiKey(savedKey);
+      if (savedOrKey) setOpenRouterKey(savedOrKey);
       if (savedClientId) setClientId(savedClientId);
       if (savedBlogId) setBlogId(savedBlogId);
 
@@ -113,9 +118,10 @@ export default function App() {
     }
   }, [addMessage]);
 
-  const saveCredentials = (k: string, c: string, b: string) => {
+  const saveCredentials = (k: string, orKey: string, c: string, b: string) => {
     try {
       if (k) localStorage.setItem('viblogger_gemini_key', k);
+      if (orKey) localStorage.setItem('viblogger_openrouter_key', orKey);
       if (c) localStorage.setItem('viblogger_client_id', c);
       if (b) localStorage.setItem('viblogger_blog_id', b);
     } catch {
@@ -126,9 +132,11 @@ export default function App() {
   const handleClearCredentials = () => {
     try {
       localStorage.removeItem('viblogger_gemini_key');
+      localStorage.removeItem('viblogger_openrouter_key');
       localStorage.removeItem('viblogger_client_id');
       localStorage.removeItem('viblogger_blog_id');
       setGeminiKey('');
+      setOpenRouterKey('');
       setClientId('');
       setBlogId('');
       setUserBlogs([]);
@@ -164,9 +172,10 @@ export default function App() {
   const handleAuthGIS = async () => {
     const cleanClientId = clientId.trim();
     const cleanApiKey = geminiKey.trim();
+    const cleanOpenRouterKey = openRouterKey.trim();
     const cleanBlogId = blogId.trim();
 
-    saveCredentials(cleanApiKey, cleanClientId, cleanBlogId);
+    saveCredentials(cleanApiKey, cleanOpenRouterKey, cleanClientId, cleanBlogId);
 
     if (!cleanClientId) {
       addMessage('ERROR: Please enter your Google OAuth 2.0 Web Client ID in the toolbar.', 'error');
@@ -204,7 +213,7 @@ export default function App() {
               setUserBlogs(blogs);
               if (!cleanBlogId || !blogs.some((b) => b.id === cleanBlogId)) {
                 setBlogId(blogs[0].id);
-                saveCredentials(cleanApiKey, cleanClientId, blogs[0].id);
+                saveCredentials(cleanApiKey, cleanOpenRouterKey, cleanClientId, blogs[0].id);
               }
               addMessage(`Agent: Auto-discovered <strong>${blogs.length}</strong> blog(s) from your account:`, 'system');
               blogs.forEach((b, idx) => {
@@ -335,14 +344,15 @@ export default function App() {
     if (isBusy) return;
 
     const cleanApiKey = geminiKey.trim();
+    const cleanOpenRouterKey = openRouterKey.trim();
     const cleanClientId = clientId.trim();
     const cleanBlogId = blogId.trim();
 
-    saveCredentials(cleanApiKey, cleanClientId, cleanBlogId);
+    saveCredentials(cleanApiKey, cleanOpenRouterKey, cleanClientId, cleanBlogId);
     addMessage(`Operator: ${prompt}`, 'user');
 
-    if (!cleanApiKey || !accessToken || !cleanBlogId) {
-      addMessage('Agent: [ERROR] Please verify Gemini Key, Google GIS Auth, and Blog ID.', 'error');
+    if ((!cleanApiKey && !cleanOpenRouterKey) || !accessToken || !cleanBlogId) {
+      addMessage('Agent: [ERROR] Please verify Gemini Key (or OpenRouter Key), Google GIS Auth, and Blog ID.', 'error');
       return;
     }
 
@@ -364,47 +374,95 @@ export default function App() {
         }
       }
 
-      // Step 1: Gemini Universal Router & Synthesis (Live Streamed)
-      addMessage('Agent: [1/5] Synthesizing payload via Gemini Flash (Live Streaming)...', 'system');
-      const streamMsgId = createStreamingMessage('>>> [GEMINI LIVE STREAM] Connecting to model...');
+      // Step 1: Universal Router & Synthesis (Live Streamed with OpenRouter Fallback)
+      let plan: GeminiPlanPayload | null = null;
+      let modelUsedLabel = 'Gemini 3.8 Flash';
+      const streamMsgId = createStreamingMessage('>>> [SYNTHESIS ENGINE] Initializing stream...');
       let lastAudioTick = 0;
 
-      const plan = await GeminiService.routeAndSynthesize(
-        cleanApiKey,
-        prompt,
-        contextInfo,
-        (_chunk, accumulated) => {
-          const now = Date.now();
-          if (now - lastAudioTick > 80) {
-            soundEngine.typewriterTick();
-            lastAudioTick = now;
-          }
-
-          let display = accumulated;
-          const titleMatch = accumulated.match(/"title"\s*:\s*"([^"]+)/);
-          const htmlMatch = accumulated.match(/"htmlContent"\s*:\s*"((?:[^"\\]|\\.)*)/);
-          if (titleMatch || htmlMatch) {
-            const titleStr = titleMatch ? titleMatch[1] : 'Synthesizing...';
-            let htmlSnippet = htmlMatch
-              ? htmlMatch[1].replace(/\\n/g, '\n').replace(/\\"/g, '"').replace(/<[^>]+>/g, ' ')
-              : '';
-            if (htmlSnippet.length > 320) {
-              htmlSnippet = '...' + htmlSnippet.slice(-320);
-            }
-            display = `ACTION TARGET: ${titleStr}\nLIVE DRAFT PREVIEW:\n${htmlSnippet}`;
-          } else {
-            if (display.length > 320) {
-              display = '...' + display.slice(-320);
-            }
-          }
-
-          updateStreamingMessage(streamMsgId, `>>> [GEMINI LIVE STREAM]\n${display}`, false);
+      const handleStreamTick = (_chunk: string, accumulated: string, prefix: string) => {
+        const now = Date.now();
+        if (now - lastAudioTick > 80) {
+          soundEngine.typewriterTick();
+          lastAudioTick = now;
         }
-      );
+
+        let display = accumulated;
+        const titleMatch = accumulated.match(/"title"\s*:\s*"([^"]+)/);
+        const htmlMatch = accumulated.match(/"htmlContent"\s*:\s*"((?:[^"\\]|\\.)*)/);
+        if (titleMatch || htmlMatch) {
+          const titleStr = titleMatch ? titleMatch[1] : 'Synthesizing...';
+          let htmlSnippet = htmlMatch
+            ? htmlMatch[1].replace(/\\n/g, '\n').replace(/\\"/g, '"').replace(/<[^>]+>/g, ' ')
+            : '';
+          if (htmlSnippet.length > 320) {
+            htmlSnippet = '...' + htmlSnippet.slice(-320);
+          }
+          display = `ACTION TARGET: ${titleStr}\nLIVE DRAFT PREVIEW:\n${htmlSnippet}`;
+        } else {
+          if (display.length > 320) {
+            display = '...' + display.slice(-320);
+          }
+        }
+
+        updateStreamingMessage(streamMsgId, `>>> [${prefix}]\n${display}`, false);
+      };
+
+      let geminiError: Error | null = null;
+
+      // Attempt primary Gemini 3.8 Flash synthesis if Gemini API key exists
+      if (cleanApiKey) {
+        try {
+          addMessage('Agent: [1/5] Synthesizing payload via Gemini 3.8 Flash (Live Streaming)...', 'system');
+          updateStreamingMessage(streamMsgId, '>>> [GEMINI 3.8 FLASH] Connecting...', false);
+          plan = await GeminiService.routeAndSynthesize(
+            cleanApiKey,
+            prompt,
+            contextInfo,
+            (delta, accumulated) => handleStreamTick(delta, accumulated, 'GEMINI 3.8 FLASH LIVE STREAM')
+          );
+          modelUsedLabel = 'Gemini 3.8 Flash';
+        } catch (err: unknown) {
+          geminiError = err instanceof Error ? err : new Error(String(err));
+          addMessage(`Agent: Gemini 3.8 unavailable (${geminiError.message}). Initiating fallback...`, 'error');
+        }
+      }
+
+      // If Gemini failed or was unconfigured, fall back to OpenRouter free models
+      if (!plan) {
+        if (!cleanOpenRouterKey) {
+          throw geminiError || new Error('Gemini API key is invalid or unconfigured, and no OpenRouter API key was provided for fallback.');
+        }
+
+        addMessage('Agent: [FALLBACK] Engaging OpenRouter Free Model Pipeline...', 'system');
+        updateStreamingMessage(streamMsgId, '>>> [OPENROUTER FALLBACK] Connecting to free models...', false);
+
+        try {
+          const result = await OpenRouterService.synthesizeWithOpenRouter(
+            cleanOpenRouterKey,
+            prompt,
+            contextInfo,
+            (delta, accumulated) => handleStreamTick(delta, accumulated, 'OPENROUTER LIVE STREAM'),
+            (activeModel) => {
+              addMessage(`Agent: OpenRouter selecting model: <code>${activeModel}</code>`, 'system');
+              updateStreamingMessage(streamMsgId, `>>> [OPENROUTER: ${activeModel}] Synthesizing payload...`, false);
+            }
+          );
+          plan = result.plan;
+          modelUsedLabel = `OpenRouter Free (${result.modelUsed})`;
+        } catch (orErr: unknown) {
+          const orErrorMsg = orErr instanceof Error ? orErr.message : String(orErr);
+          throw new Error(
+            geminiError
+              ? `Gemini & OpenRouter fallbacks exhausted.\nGemini Error: ${geminiError.message}\nOpenRouter Error: ${orErrorMsg}`
+              : `OpenRouter Error: ${orErrorMsg}`
+          );
+        }
+      }
 
       updateStreamingMessage(
         streamMsgId,
-        `>>> [GEMINI LIVE STREAM COMPLETE] Action: ${plan.apiAction} | Title: "${plan.title}" | Labels: [${plan.labels.join(', ')}]`,
+        `>>> [SYNTHESIS COMPLETE - ${modelUsedLabel}] Action: ${plan.apiAction} | Title: "${plan.title}" | Labels: [${plan.labels.join(', ')}]`,
         true
       );
       setLastPlan(plan);
@@ -687,6 +745,8 @@ Agent: Creation complete. Click <strong>[SERP Preview]</strong> in the menu to i
         lastPlan={lastPlan}
         geminiKey={geminiKey}
         onGeminiKeyChange={setGeminiKey}
+        openRouterKey={openRouterKey}
+        onOpenRouterKeyChange={setOpenRouterKey}
         clientId={clientId}
         onClientIdChange={setClientId}
         blogId={blogId}
@@ -702,6 +762,7 @@ Agent: Creation complete. Click <strong>[SERP Preview]</strong> in the menu to i
         onSaveField={(field) => {
           const names = {
             gemini: 'Gemini API Key',
+            openrouter: 'OpenRouter Fallback Key',
             clientId: 'Google Client ID',
             blogId: 'Blogger Blog ID'
           };

@@ -42,7 +42,7 @@ export const ComprehensiveGuide: React.FC<ComprehensiveGuideProps> = ({ onUsePro
             📖 VIBLOGGER FOR BLOGGER — MASTER OPERATOR MANUAL &amp; COMMAND GUIDE
           </strong>
           <div style={{ fontSize: '11px', color: '#c0c0ff', marginTop: '2px' }}>
-            Comprehensive 2000+ Word Technical Reference &bull; Gemini 2.5 Flash Autonomous Synthesis Engine
+            Comprehensive 2000+ Word Technical Reference &bull; Gemini 3.8 Flash Autonomous Synthesis Engine
           </div>
         </div>
         <div style={{ fontSize: '11px', background: '#000040', padding: '2px 8px', border: '1px solid #0080ff' }}>
@@ -158,7 +158,7 @@ export const ComprehensiveGuide: React.FC<ComprehensiveGuideProps> = ({ onUsePro
         <div className="doc-section">
           <h3>CHAPTER 1: SYSTEM ARCHITECTURE &amp; OPERATIONAL PHILOSOPHY</h3>
           <p>
-            <strong>Viblogger for Blogger</strong> is a high-throughput, autonomous command-line publishing workstation designed specifically for technical writers, affiliate marketers, developer advocates, and SEO engineers. Operating entirely within a high-speed browser client, Viblogger pairs Google DeepMind's <strong>Gemini 2.5 Flash</strong> generative intelligence engine with direct, client-side REST orchestration of the <strong>Blogger API v3</strong>, <strong>Google Identity Services (GIS) OAuth 2.0</strong>, <strong>IndexNow protocol</strong>, and <strong>Google Search Console (GSC)</strong> telemetry.
+            <strong>Viblogger for Blogger</strong> is a high-throughput, autonomous command-line publishing workstation designed specifically for technical writers, affiliate marketers, developer advocates, and SEO engineers. Operating entirely within a high-speed browser client, Viblogger pairs Google DeepMind's <strong>Gemini 3.8 Flash</strong> generative intelligence engine (with automatic multi-model failover to <strong>OpenRouter Free Tier Models</strong> including Llama 3.3 70B, Qwen 2.5 Coder, Mistral 7B, and DeepSeek R1) with direct, client-side REST orchestration of the <strong>Blogger API v3</strong>, <strong>Google Identity Services (GIS) OAuth 2.0</strong>, <strong>IndexNow protocol</strong>, and <strong>Google Search Console (GSC)</strong> telemetry.
           </p>
           <p>
             Unlike conventional content management interfaces that require tedious manual formatting, switching between markdown editors, converting mathematical notation, and manually configuring search meta tags, Viblogger executes an end-to-end autonomous synthesis loop:
@@ -168,7 +168,7 @@ export const ComprehensiveGuide: React.FC<ComprehensiveGuideProps> = ({ onUsePro
               <strong>Natural Language Intent Parsing:</strong> The operator enters any instruction in natural language. Viblogger analyzes the semantic goal, determines whether the request requires an API query (e.g., listing posts, searching drafts, fetching comments, analyzing GSC performance) or a content mutation (e.g., creating a 3,000-word post, building a programmatic landing page, updating an existing document, or deleting obsolete content).
             </li>
             <li>
-              <strong>Structured Multi-Modal Generation:</strong> Powered by Gemini 2.5 Flash, the engine emits a strict structured JSON payload adhering to a comprehensive schema. This payload encapsulates semantic HTML5 article markup, meta descriptions, hierarchical taxonomy labels, reactive Mermaid.js diagram code, KaTeX mathematical formulas, responsive comparison tables, and schema.org JSON-LD scripts.
+              <strong>Structured Multi-Modal Generation:</strong> Powered by Gemini 3.8 Flash, the engine emits a strict structured JSON payload adhering to a comprehensive schema. This payload encapsulates semantic HTML5 article markup, meta descriptions, hierarchical taxonomy labels, reactive Mermaid.js diagram code, KaTeX mathematical formulas, responsive comparison tables, and schema.org JSON-LD scripts.
             </li>
             <li>
               <strong>Live Server-Sent Event (SSE) Streaming:</strong> Responses stream into the retro CRT terminal token-by-token in real-time, allowing operators to observe the synthesis process immediately as it generates rather than waiting for a bulk payload.

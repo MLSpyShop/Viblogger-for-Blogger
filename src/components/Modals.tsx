@@ -9,13 +9,15 @@ interface ModalsProps {
   lastPlan: GeminiPlanPayload | null;
   geminiKey?: string;
   onGeminiKeyChange?: (val: string) => void;
+  openRouterKey?: string;
+  onOpenRouterKeyChange?: (val: string) => void;
   clientId?: string;
   onClientIdChange?: (val: string) => void;
   blogId?: string;
   onBlogIdChange?: (val: string) => void;
   userBlogs?: BlogItem[];
   onSelectBlog?: (selectedBlogId: string) => void;
-  onSaveField?: (fieldName: 'gemini' | 'clientId' | 'blogId') => void;
+  onSaveField?: (fieldName: 'gemini' | 'openrouter' | 'clientId' | 'blogId') => void;
   onUsePrompt?: (promptText: string) => void;
 }
 
@@ -25,6 +27,8 @@ export const Modals: React.FC<ModalsProps> = ({
   lastPlan,
   geminiKey = '',
   onGeminiKeyChange,
+  openRouterKey = '',
+  onOpenRouterKeyChange,
   clientId = '',
   onClientIdChange,
   blogId = '',
@@ -36,10 +40,12 @@ export const Modals: React.FC<ModalsProps> = ({
 }) => {
   const [savedStatus, setSavedStatus] = useState<{ [key: string]: boolean }>({});
 
-  const handleSave = (fieldName: 'gemini' | 'clientId' | 'blogId') => {
+  const handleSave = (fieldName: 'gemini' | 'openrouter' | 'clientId' | 'blogId') => {
     try {
       if (fieldName === 'gemini') {
         localStorage.setItem('viblogger_gemini_key', geminiKey.trim());
+      } else if (fieldName === 'openrouter') {
+        localStorage.setItem('viblogger_openrouter_key', openRouterKey.trim());
       } else if (fieldName === 'clientId') {
         localStorage.setItem('viblogger_client_id', clientId.trim());
       } else if (fieldName === 'blogId') {
@@ -84,8 +90,19 @@ export const Modals: React.FC<ModalsProps> = ({
             <div className="modal-content">
               {/* 1. Gemini API Key */}
               <div className="doc-section">
-                <h3>1. Gemini API Key (Google AI Studio)</h3>
-                <p>Required for synthesis, long-form post generation, and automated HTML formatting.</p>
+                <div className="key-header-row">
+                  <h3>1. Gemini API Key (Google AI Studio)</h3>
+                  <a
+                    href="https://aistudio.google.com/app/apikey"
+                    target="_blank"
+                    rel="noopener noreferrer"
+                    className="key-direct-link"
+                    title="Open Google AI Studio API Key Manager in new tab"
+                  >
+                    <span>&#128279; Get Gemini API Key &#8599;</span>
+                  </a>
+                </div>
+                <p>Primary engine (Gemini 3.8 Flash) for synthesis, long-form post generation, and automated HTML formatting. Obtain free from Google AI Studio.</p>
                 <div style={{ display: 'flex', gap: '6px', marginTop: '6px', alignItems: 'center' }}>
                   <input
                     type="password"
@@ -107,10 +124,57 @@ export const Modals: React.FC<ModalsProps> = ({
                 </div>
               </div>
 
-              {/* 2. Google Client ID */}
+              {/* 2. OpenRouter API Key (Free Models Fallback) */}
               <div className="doc-section">
-                <h3>2. Google OAuth 2.0 Web Client ID</h3>
-                <p>Required for Google Identity Services (GIS) browser authorization to read and write to Blogger.</p>
+                <div className="key-header-row">
+                  <h3>2. OpenRouter API Key (Free Models Fallback)</h3>
+                  <a
+                    href="https://openrouter.ai/keys"
+                    target="_blank"
+                    rel="noopener noreferrer"
+                    className="key-direct-link"
+                    title="Open OpenRouter API Keys Dashboard in new tab"
+                  >
+                    <span>&#128279; Get OpenRouter Key &#8599;</span>
+                  </a>
+                </div>
+                <p>Optional fallback key. Automatically engages free models (Llama 3.3 70B, Qwen 2.5 Coder, Mistral 7B, DeepSeek R1) if Gemini is unavailable or rate-limited.</p>
+                <div style={{ display: 'flex', gap: '6px', marginTop: '6px', alignItems: 'center' }}>
+                  <input
+                    type="password"
+                    id="modalOpenRouterApiKey"
+                    className="input-field"
+                    style={{ flex: 1 }}
+                    placeholder="sk-or-v1-..."
+                    value={openRouterKey}
+                    onChange={(e) => onOpenRouterKeyChange && onOpenRouterKeyChange(e.target.value)}
+                  />
+                  <button
+                    type="button"
+                    id="btnModalSaveOpenRouter"
+                    className="win-btn"
+                    onClick={() => handleSave('openrouter')}
+                  >
+                    {savedStatus.openrouter ? 'Saved ✓' : 'Save'}
+                  </button>
+                </div>
+              </div>
+
+              {/* 3. Google Client ID */}
+              <div className="doc-section">
+                <div className="key-header-row">
+                  <h3>3. Google OAuth 2.0 Web Client ID</h3>
+                  <a
+                    href="https://console.cloud.google.com/apis/credentials"
+                    target="_blank"
+                    rel="noopener noreferrer"
+                    className="key-direct-link"
+                    title="Open Google Cloud Console Credentials in new tab"
+                  >
+                    <span>&#128279; Google Cloud Credentials &#8599;</span>
+                  </a>
+                </div>
+                <p>Required for Google Identity Services (GIS) browser authorization to read and write to Blogger. Create an &quot;OAuth client ID&quot; (Web application type).</p>
                 <div style={{ display: 'flex', gap: '6px', marginTop: '6px', alignItems: 'center' }}>
                   <input
                     type="text"
@@ -132,10 +196,21 @@ export const Modals: React.FC<ModalsProps> = ({
                 </div>
               </div>
 
-              {/* 3. Blogger Blog ID */}
+              {/* 4. Blogger Blog ID */}
               <div className="doc-section">
-                <h3>3. Blogger Blog ID</h3>
-                <p>The numerical Blog ID from your Blogger dashboard URL (or select from authenticated blogs).</p>
+                <div className="key-header-row">
+                  <h3>4. Blogger Blog ID</h3>
+                  <a
+                    href="https://www.blogger.com/"
+                    target="_blank"
+                    rel="noopener noreferrer"
+                    className="key-direct-link"
+                    title="Open Blogger Dashboard in new tab"
+                  >
+                    <span>&#128279; Open Blogger Dashboard &#8599;</span>
+                  </a>
+                </div>
+                <p>The numerical Blog ID from your Blogger dashboard URL (<code>blogger.com/blog/posts/[BLOG_ID]</code>) or select from authenticated blogs.</p>
                 <div style={{ display: 'flex', gap: '6px', marginTop: '6px', alignItems: 'center' }}>
                   {userBlogs && userBlogs.length > 0 ? (
                     <select
@@ -189,6 +264,7 @@ export const Modals: React.FC<ModalsProps> = ({
                 className="win-btn"
                 onClick={() => {
                   handleSave('gemini');
+                  handleSave('openrouter');
                   handleSave('clientId');
                   handleSave('blogId');
                   onClose();
